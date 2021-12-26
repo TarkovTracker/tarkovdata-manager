@@ -1,60 +1,103 @@
 <template>
-  <v-app>
-    <v-app-bar
+  <v-app id="inspire">
+    <v-navigation-drawer
+      v-model="drawer"
+      :mini-variant.sync="mini"
       app
-      color="primary"
-      dark
     >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
+      <v-list>
+        <v-list-item
+          :to="'home'"
+        >
+          <v-list-item-icon>
+            <v-icon>mdi-view-dashboard</v-icon>
+          </v-list-item-icon>
 
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
+          <v-list-item-content>
+            <v-list-item-title>Overview</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item
+          :to="'quests'"
+        >
+          <v-list-item-icon>
+            <v-icon>mdi-clipboard-check</v-icon>
+          </v-list-item-icon>
 
-      <v-spacer></v-spacer>
+          <v-list-item-content>
+            <v-list-item-title>Quests</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+         <v-list-item
+          :to="'raw'"
+        >
+          <v-list-item-icon>
+            <v-icon>mdi-code-json</v-icon>
+          </v-list-item-icon>
 
-      <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
+          <v-list-item-content>
+            <v-list-item-title>Raw</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app-bar app>
+      <v-app-bar-nav-icon @click="mini = !mini"></v-app-bar-nav-icon>
+
+      <v-toolbar-title>
+        TarkovData Manager
+        <template v-if="$store.get('quests/retrieved') == false">
+          <v-progress-circular
+            indeterminate
+            color="primary"
+          ></v-progress-circular>
+        </template>
+    </v-toolbar-title>
     </v-app-bar>
 
-    <v-main>
-      <HelloWorld/>
+    <v-main
+      class="ma-8"
+    >
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
+  export default {
+    data: () => ({ 
+      drawer: null,
+      mini: true,
+    }),
+    computed: {
+      diff: function() {
+        const Diff = require('diff');
+        var diffLines = Diff.diffJson(
+          this.$store.copy('quests/original'), 
+          this.$store.copy('quests/data')
+        )
+        return diffLines
+      },
+    },
+    mounted() {
+      fetch('https://tarkovtracker.github.io/tarkovdata/quests.json')
+        .then(response => response.json())
+        .then(data => {
+          this.$store.set('quests/original', data)
+          this.$store.set('quests/data', data)
+          this.$store.set('quests/retrieved', true)
+          this.$forceUpdate()
+        });
 
-export default {
-  name: 'App',
-
-  components: {
-    HelloWorld,
-  },
-
-  data: () => ({
-    //
-  }),
-};
+      fetch('https://tarkovtracker.github.io/tarkovdata/traders.json')
+        .then(response => response.json())
+        .then(data => {
+          this.$store.set('traders/original', data)
+          this.$store.set('traders/data', data)
+          this.$store.set('traders/retrieved', true)
+          this.$forceUpdate()
+        });
+    },
+  }
 </script>
