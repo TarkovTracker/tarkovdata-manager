@@ -7,7 +7,15 @@
         v-for="quest in $store.get('quests/data')"
         :key="quest.id"
       >
-        <QuestDetails :quest="quest" />
+        <v-lazy
+          :options="{
+            threshold: .5
+          }"
+          min-height="200"
+          transition="fade-transition"
+        >
+          <QuestDetails :quest="quest" />
+        </v-lazy>
       </v-col>
     </v-row>
   </v-container>
