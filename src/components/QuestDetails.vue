@@ -6,8 +6,8 @@
       >
         <v-card-title>
           <v-container class="pa-1">
-            <v-row v-if="titleEdit === true" no-gutters>
-              <v-col md="6" cols="11">
+            <v-row v-if="editing.title === true" no-gutters>
+              <v-col md="11" cols="11">
                 <v-text-field
                   label="Title"
                   v-model="quest.locales.en"
@@ -20,7 +20,7 @@
                 <v-btn
                   icon
                   color="grey"
-                  @click="editTitle()"
+                  @click="editField('title')"
                 >
                   <v-icon>mdi-pencil-off</v-icon>
                 </v-btn>
@@ -34,7 +34,7 @@
                 <v-btn
                   icon
                   color="grey"
-                  @click="editTitle()"
+                  @click="editField('title')"
                 >
                   <v-icon>mdi-pencil</v-icon>
                 </v-btn>
@@ -47,15 +47,170 @@
         </v-card-title>
         <v-card-text class="mx-1 mb-4">
           <div class="text-subtitle-2">
+            Requirements:
+          </div>
+          <div>
+            <v-container class="pa-0">
+                <v-row no-gutters class="align-center">
+                    <v-col v-if="editing.levelrequire === true" cols="3">
+                        <v-text-field
+                            label="Level Required"
+                            v-model="quest.require.level"
+                            outlined
+                            dense
+                            hide-details
+                            type="number"
+                        ></v-text-field>
+                    </v-col>
+                    <v-col v-else cols="auto">
+                        Level Required: {{ quest.require.level }}
+                    </v-col>
+                    <v-col cols="auto">
+                        <v-btn
+                            icon
+                            small
+                            color="grey"
+                            @click="editField('levelrequire')"
+                        >
+                            <v-icon small>mdi-pencil</v-icon>
+                        </v-btn>
+                    </v-col>
+                </v-row>
+                <v-row no-gutters class="align-center">
+                    <v-container class="pa-0">
+                        <v-row
+                            no-gutters
+                            v-for="(required, i) in quest.require.quests"
+                            :key="i"
+                            class="align-center"
+                        >
+                            <template v-if="Array.isArray(required) == true">
+                              One-of:&nbsp;
+                              <span v-for="(indiv, z) in required" :key="z">
+                                {{$store.get('quests/data').filter(q => q.id == indiv)[0].locales.en}},&nbsp;
+                              </span>
+                            </template>
+                            <template v-else>
+                                {{$store.get('quests/data').filter(q => q.id == required)[0].locales.en}}
+                            </template>
+                            <v-btn
+                                icon
+                                small
+                                color="grey"
+                                @click="removeQuestRequired(i)"
+                                title="Remove requirement"
+                            >
+                                <v-icon small>mdi-playlist-remove</v-icon>
+                            </v-btn>
+                        </v-row>
+                        <v-row
+                          no-gutters
+                          class="align-center"
+                        >
+                          <v-dialog
+                            v-model="requiredDialog"
+                            width="500"
+                          >
+                            <template v-slot:activator="{ on, attrs }">
+                              <v-btn
+                                dark
+                                v-bind="attrs"
+                                v-on="on"
+                                x-small
+                              >
+                                Add Requirement
+                              </v-btn>
+                            </template>
+
+                            <v-card>
+                              <v-card-title>
+                                Add {{ quest.locales.en }} required quest(s)
+                              </v-card-title>
+
+                              <v-card-text>
+                                <v-select
+                                  v-model="questRequireSelect"
+                                  :items="requireTypes"
+                                  item-text="name"
+                                  item-value="type"
+                                  label="Required State"
+                                  dense
+                                ></v-select>
+
+                                <v-divider class="mb-5"></v-divider>
+
+                                <span
+                                  v-for="(selected, selectIndex) in requiredSelectArray"
+                                  :key="selectIndex"
+                                >
+                                <v-row>
+                                  <v-col>
+                                    <v-autocomplete
+                                      v-model="requiredSelectArray[selectIndex]"
+                                      :items="otherQuests"
+                                      hide-no-data
+                                      hide-selected
+                                      item-text="name"
+                                      item-value="id"
+                                      label="Quest"
+                                      placeholder="Start typing to Search"
+                                    ></v-autocomplete>
+                                  </v-col>
+                                  <v-col cols="auto" v-if="requiredSelectArray.length > 1">
+                                    <v-btn
+                                        icon
+                                        small
+                                        color="grey"
+                                        @click="requiredQuestSelects.splice(selectIndex, 1)"
+                                        title="Remove this requirement"
+                                    >
+                                        <v-icon small>mdi-playlist-remove</v-icon>
+                                    </v-btn>
+                                  </v-col>
+                                </v-row>
+                                </span>
+                                <template v-if="questRequireSelect == 'oneof'">
+                                  <v-btn
+                                      icon
+                                      small
+                                      color="grey"
+                                      @click="requiredQuestSelects.push(otherQuests[0].id)"
+                                      title="Add another one-of quest requirement"
+                                  >
+                                      <v-icon small>mdi-playlist-plus</v-icon>
+                                  </v-btn>
+                                </template>
+                              </v-card-text>
+
+                              <v-divider></v-divider>
+
+                              <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn
+                                  color="primary"
+                                  text
+                                  @click="addRequiredQuests()"
+                                >
+                                  Add Requirement
+                                </v-btn>
+                              </v-card-actions>
+                            </v-card>
+                          </v-dialog>
+                        </v-row>
+                    </v-container>
+                </v-row>
+            </v-container>
+          </div>
+          <div class="text-subtitle-2 mt-2">
             General:
           </div>
           <div>
             <v-container class="pa-0">
                 <v-row no-gutters class="align-center">
-                    <v-col v-if="giverEdit === true" cols="3">
+                    <v-col v-if="editing.giver === true" cols="3">
                         <v-select
                             v-model="quest.giver"
-                            :items="givers"
+                            :items="traders"
                             item-text="name"
                             item-value="giverid"
                             label="Giver"
@@ -71,7 +226,7 @@
                             icon
                             small
                             color="grey"
-                            @click="editGiver()"
+                            @click="editField('giver')"
                         >
                             <v-icon small>mdi-pencil</v-icon>
                         </v-btn>
@@ -79,7 +234,63 @@
                 </v-row>
 
                 <v-row no-gutters class="align-center">
-                    <v-col v-if="expEdit === true" cols="3">
+                    <v-col v-if="editing.wiki === true" cols="11">
+                        <v-text-field
+                            label="Wiki Link"
+                            v-model="quest.wiki"
+                            outlined
+                            dense
+                            hide-details
+                        ></v-text-field>
+                    </v-col>
+                    <v-col v-else cols="auto">
+                        Wiki: <a :href="quest.wiki">{{ quest.wiki }}</a>
+                    </v-col>
+                    <v-col cols="auto">
+                        <v-btn
+                            icon
+                            small
+                            color="grey"
+                            @click="editField('wiki')"
+                        >
+                            <v-icon small>mdi-pencil</v-icon>
+                        </v-btn>
+                    </v-col>
+                </v-row>
+
+                <v-row no-gutters class="align-center">
+                    <v-col v-if="editing.gameId === true" cols="11">
+                        <v-text-field
+                            label="Game ID"
+                            v-model="quest.gameId"
+                            outlined
+                            dense
+                            hide-details
+                        ></v-text-field>
+                    </v-col>
+                    <v-col v-else cols="auto">
+                        Game ID: {{ quest.gameId }}
+                    </v-col>
+                    <v-col cols="auto">
+                        <v-btn
+                            icon
+                            small
+                            color="grey"
+                            @click="editField('gameId')"
+                        >
+                            <v-icon small>mdi-pencil</v-icon>
+                        </v-btn>
+                    </v-col>
+                </v-row>
+            </v-container>
+          </div>
+          <div class="text-subtitle-2 mt-2">
+            Rewards:
+          </div>
+          <div>
+            <v-container class="pa-0">
+              <v-row no-gutters class="align-center">
+                    <v-col v-if="editing.exp === true" cols="3">
                         <v-text-field
                             label="EXP"
                             v-model="quest.exp"
@@ -97,36 +308,91 @@
                             icon
                             small
                             color="grey"
-                            @click="editExp()"
+                            @click="editField('exp')"
                         >
                             <v-icon small>mdi-pencil</v-icon>
                         </v-btn>
                     </v-col>
                 </v-row>
-
                 <v-row no-gutters class="align-center">
-                    <v-col v-if="wikiEdit === true" cols="11">
-                        <v-text-field
-                            label="Wiki Link"
-                            v-model="quest.wiki"
-                            outlined
-                            dense
-                            hide-details
-                        ></v-text-field>
-                    </v-col>
-                    <v-col v-else cols="auto">
-                        Wiki: <a :href="quest.wiki">{{ quest.wiki }}</a>
-                    </v-col>
-                    <v-col cols="auto">
-                        <v-btn
-                            icon
-                            small
-                            color="grey"
-                            @click="editWiki()"
+                    <v-container class="pa-0">
+                        <v-row
+                            no-gutters
+                            v-for="(reputation, i) in quest.reputation"
+                            :key="i"
+                            class="align-center"
                         >
-                            <v-icon small>mdi-pencil</v-icon>
-                        </v-btn>
-                    </v-col>
+                            Reputation with {{ traderName(reputation.trader) }} {{ reputationNumber(reputation.rep) }}
+                            <v-btn
+                                icon
+                                small
+                                color="grey"
+                                @click="removeReputation(i)"
+                                title="Remove reputation change"
+                            >
+                                <v-icon small>mdi-playlist-remove</v-icon>
+                            </v-btn>
+                        </v-row>
+                        <v-row
+                          no-gutters
+                          class="align-center"
+                        >
+                          <v-dialog
+                            v-model="reputationDialog"
+                            width="500"
+                          >
+                            <template v-slot:activator="{ on, attrs }">
+                              <v-btn
+                                dark
+                                v-bind="attrs"
+                                v-on="on"
+                                x-small
+                              >
+                                Add Reputation
+                              </v-btn>
+                            </template>
+
+                            <v-card>
+                              <v-card-title>
+                                Add {{ quest.locales.en }} reputation changes
+                              </v-card-title>
+
+                              <v-card-text>
+                                <v-select
+                                    v-model="reputationTraderSelect"
+                                    :items="traders"
+                                    item-text="name"
+                                    item-value="giverid"
+                                    label="Trader"
+                                    single-line
+                                    dense
+                                ></v-select>
+                                <v-text-field
+                                    label="Amount"
+                                    v-model="reputationAmountSelect"
+                                    outlined
+                                    dense
+                                    hide-details
+                                    type="number"
+                                ></v-text-field>
+                              </v-card-text>
+
+                              <v-divider></v-divider>
+
+                              <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn
+                                  color="primary"
+                                  text
+                                  @click="addReputationChange()"
+                                >
+                                  Add Reputation Change
+                                </v-btn>
+                              </v-card-actions>
+                            </v-card>
+                          </v-dialog>
+                        </v-row>
+                    </v-container>
                 </v-row>
             </v-container>
           </div>
@@ -143,33 +409,59 @@
       },
     },
     data: () => ({ 
-      titleEdit: false,
-      giverEdit: false,
-      expEdit: false,
-      wikiEdit: false,
+      editing: {},
+      requireTypes: [
+        { name: "Single Quest", "type": "single"},
+        { name: "One-of-quest", "type": "oneof"}
+      ],
+      questRequireSelect: "single",
+      requiredQuestSelects: [0],
+      requiredDialog: false,
+      reputationDialog: false,
+      reputationTraderSelect: 0,
+      reputationAmountSelect: 0.01,
     }),
     computed: {
         giver: function() {
             return Object.values(this.$store.copy('traders/data'))?.filter(t => t.id == this.quest.giver)[0]?.locale?.en || this.quest.giver
         },
-        givers: function() {
+        traders: function() {
             return Object.values(this.$store.copy('traders/data'))?.map(trader => {
                 return {name: trader.locale.en, giverid: trader.id}
             }) || []
-        }
+        },
+        requiredSelectArray: function() {
+          return this.questRequireSelect == "single" ? this.requiredQuestSelects.slice(0,1) : this.requiredQuestSelects
+        },
+        otherQuests: function() {
+          return this.$store.copy('quests/data').filter(q => q.id != this.quest.id).map(q => {
+            return {name: q.locales.en, id: q.id}
+          })
+        },
     },
     methods: {
-      editTitle() {
-        this.$set(this, 'titleEdit', (this.titleEdit == true ? false : true))
+      editField(field) {
+          this.$set(this.editing, field, (this.editing[field] == true ? false : true))
       },
-      editGiver() {
-        this.$set(this, 'giverEdit', (this.giverEdit == true ? false : true))
+      removeQuestRequired(index) {
+          this.quest.require.quests.splice(index, 1)
       },
-      editExp() {
-        this.$set(this, 'expEdit', (this.expEdit == true ? false : true))
+      addRequiredQuests() {
+          this.quest.require.quests.push(this.questRequireSelect == "single" ? this.requiredQuestSelects[0] : this.requiredQuestSelects)
+          this.requiredDialog = false
       },
-      editWiki() {
-        this.$set(this, 'wikiEdit', (this.wikiEdit == true ? false : true))
+      traderName(traderIndex) {
+        return Object.values(this.$store.copy('traders/data')).filter(t => t.id == traderIndex)[0]?.locale?.en || traderIndex
+      },
+      reputationNumber(number) {
+        return `${number < 0 ? "" : "+"}${number}`
+      },
+      removeReputation(index) {
+          this.quest.reputation.splice(index, 1)
+      },
+      addReputationChange() {
+        this.quest.reputation.push({trader: this.reputationTraderSelect, rep: this.reputationAmountSelect})
+        this.reputationDialog = false
       },
     }
   }
