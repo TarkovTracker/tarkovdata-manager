@@ -46,7 +46,7 @@
           </v-container>
         </v-card-title>
         <v-card-text class="mx-1 mb-4">
-          <div class="text-subtitle-2">
+          <div class="text-subtitle-2 text-decoration-underline">
             Requirements:
           </div>
           <div>
@@ -201,7 +201,7 @@
                 </v-row>
             </v-container>
           </div>
-          <div class="text-subtitle-2 mt-2">
+          <div class="text-subtitle-2 mt-2 text-decoration-underline">
             General:
           </div>
           <div>
@@ -284,7 +284,7 @@
                 </v-row>
             </v-container>
           </div>
-          <div class="text-subtitle-2 mt-2">
+          <div class="text-subtitle-2 mt-2 text-decoration-underline">
             Rewards:
           </div>
           <div>
@@ -396,6 +396,25 @@
                 </v-row>
             </v-container>
           </div>
+          <div class="text-subtitle-2 mt-2 text-decoration-underline">
+            Objectives:
+          </div>
+          <div>
+            <v-container class="pa-0">
+              <v-row no-gutters class="align-center">
+                <v-container class="pa-0">
+                  <v-row
+                      no-gutters
+                      v-for="(objective, i) in quest.objectives"
+                      :key="i"
+                      class="align-center"
+                  >
+                     Type: {{ typeLanguage(objective.type) }} Number: {{ objective.number }} Location: {{ locationLanguage(objective.location) }} Target: {{ targetLanguage(objective.target) }} {{ objective.hint ? `Hint: ${objective.hint}` : ''}}
+                  </v-row>
+                </v-container>
+              </v-row>
+            </v-container>
+          </div>
         </v-card-text>
       </v-card>
   </div>
@@ -420,8 +439,30 @@
       reputationDialog: false,
       reputationTraderSelect: 0,
       reputationAmountSelect: 0.01,
+      objectiveTypes: [
+        { name: "Kill", type: "kill" },
+        { name: "Find item in raid", type: "find" },
+        { name: "Collect (not FIR)", type: "collect" },
+        { name: "Pick up item", type: "pickup" },
+        { name: "Place item", type: "place" },
+        { name: "Mark location", type: "mark" },
+        { name: "Locate (reach proximity)", type: "locate" },
+        { name: "Key required", type: "key" },
+        { name: "Achieve reputation", type: "reputation" },
+        { name: "Achieve skill level", type: "skill" },
+        { name: "Build weapon", type: "build" },
+        { name: "Special condition warning", type: "warning" },
+      ],
     }),
     computed: {
+        locations: function() {
+          var locations = Object.values(this.$store.copy('maps/data'))?.map(m => {
+            return {name: m.locale.en, id: m.id}
+          }) || []
+          locations.unshift({name: "General warning", id: -2})
+          locations.unshift({name: "Any location", id: -1})
+          return locations
+        },
         giver: function() {
             return Object.values(this.$store.copy('traders/data'))?.filter(t => t.id == this.quest.giver)[0]?.locale?.en || this.quest.giver
         },
@@ -463,6 +504,18 @@
         this.quest.reputation.push({trader: this.reputationTraderSelect, rep: this.reputationAmountSelect})
         this.reputationDialog = false
       },
+      typeLanguage(type) {
+        return this.objectiveTypes.filter(t => t.type == type)[0].name
+      },
+      locationLanguage(location) {
+        if (location == -2) {
+          return "Nowhere"
+        }
+        return this.locations.filter(t => t.id == location)[0]?.name || location
+      },
+      targetLanguage(target) {
+        return this.$store.copy(`items/data@${target}`)?.name || target
+      }
     }
   }
 </script>

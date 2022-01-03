@@ -65,6 +65,7 @@
 </template>
 
 <script>
+  import { request, gql } from 'graphql-request'
   export default {
     data: () => ({ 
       drawer: null,
@@ -98,6 +99,35 @@
           this.$store.set('traders/retrieved', true)
           this.$forceUpdate()
         });
+
+      fetch('https://tarkovtracker.github.io/tarkovdata/maps.json')
+        .then(response => response.json())
+        .then(data => {
+          this.$store.set('maps/original', data)
+          this.$store.set('maps/data', data)
+          this.$store.set('maps/retrieved', true)
+          this.$forceUpdate()
+        });
+
+      const itemQuery = gql`
+      {
+          itemsByType(type: any) {
+              id
+              name
+              shortName
+          }
+      }`
+
+      request('https://tarkov-tools.com/graphql', itemQuery).then((data) => {
+        var mappedData = {}
+        data.itemsByType.forEach((item) => {
+          mappedData[item.id] = item
+        })
+        this.$store.set('items/original', mappedData)
+        this.$store.set('items/data', mappedData)
+        this.$store.set('items/retrieved', true)
+        this.$forceUpdate()
+      })
     },
   }
 </script>
