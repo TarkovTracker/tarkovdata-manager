@@ -409,9 +409,118 @@
                       :key="i"
                       class="align-center"
                   >
-                     Type: {{ typeLanguage(objective.type) }} Number: {{ objective.number }} Location: {{ locationLanguage(objective.location) }} Target: {{ targetLanguage(objective.target) }} {{ objective.hint ? `Hint: ${objective.hint}` : ''}}
+                     <b>Type:</b>&nbsp;{{ typeLanguage(objective.type) }}&nbsp;<b>Number:</b>&nbsp;{{ objective.number }}&nbsp;<b>Location:</b>&nbsp;{{ locationLanguage(objective.location) }}&nbsp;<b>Target:</b>&nbsp;{{ targetLanguage(objective.target) }}&nbsp;{{ objective.hint ? `Hint: ${objective.hint}` : ''}}&nbsp;<span v-if="objective.gps" class="font-weight-bold">Has GPS Coords</span>
+                     <v-btn
+                          icon
+                          small
+                          color="grey"
+                          @click="quest.objectives.splice(i, 1)"
+                          title="Remove this objective"
+                      >
+                          <v-icon small>mdi-playlist-remove</v-icon>
+                      </v-btn>
                   </v-row>
                 </v-container>
+              </v-row>
+              <v-row
+                no-gutters
+                class="align-center"
+              >
+                <v-dialog
+                  v-model="objectiveDialog"
+                  width="500"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      dark
+                      v-bind="attrs"
+                      v-on="on"
+                      x-small
+                    >
+                      Add Objective
+                    </v-btn>
+                  </template>
+
+                  <v-card>
+                    <v-card-title>
+                      Add {{ quest.locales.en }} objective
+                    </v-card-title>
+
+                    <v-card-text>
+                      <v-select
+                          v-model="objectiveTypeSelect"
+                          :items="objectiveTypes"
+                          item-text="name"
+                          item-value="type"
+                          label="Type"
+                          single-line
+                          dense
+                      ></v-select>
+                      <v-combobox
+                        v-if="objectiveTypeSelect == 'mark'"
+                        v-model="objectiveToolSelect"
+                        :items="targets"
+                        hide-no-data
+                        hide-selected
+                        item-text="name"
+                        item-value="id"
+                        label="Tool"
+                        placeholder="Select item used for marking"
+                        class="mt-2"
+                        :ref="`${quest.id}targetselect`"
+                      ></v-combobox>
+                      <v-select
+                          v-model="objectiveLocationSelect"
+                          :items="locations"
+                          item-text="name"
+                          item-value="id"
+                          label="Location"
+                          single-line
+                          dense
+                      ></v-select>
+                      <v-text-field
+                          label="Number"
+                          v-model="objectiveNumberSelect"
+                          outlined
+                          dense
+                          hide-details
+                          type="number"
+                      ></v-text-field>
+                      <v-combobox
+                        v-model="objectiveTargetSelect"
+                        :items="targets"
+                        hide-no-data
+                        hide-selected
+                        item-text="name"
+                        item-value="id"
+                        label="Targets"
+                        placeholder="Type target or select item"
+                        class="mt-2"
+                        :ref="`${quest.id}targetselect`"
+                      ></v-combobox>
+                      <v-text-field
+                          label="Hint (Optional)"
+                          v-model="objectiveHintSelect"
+                          outlined
+                          dense
+                          hide-details
+                      ></v-text-field>
+                    </v-card-text>
+
+                    <v-divider></v-divider>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="primary"
+                        text
+                        @click="addObjective()"
+                      >
+                        Add Objective
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
               </v-row>
             </v-container>
           </div>
@@ -453,6 +562,13 @@
         { name: "Build weapon", type: "build" },
         { name: "Special condition warning", type: "warning" },
       ],
+      objectiveDialog: false,
+      objectiveTypeSelect: "kill",
+      objectiveLocationSelect: -1,
+      objectiveNumberSelect: 1,
+      objectiveTargetSelect: "Scavs",
+      objectiveHintSelect: "",
+      objectiveToolSelect: null,
     }),
     computed: {
         locations: function() {
@@ -478,6 +594,9 @@
           return this.$store.copy('quests/data').filter(q => q.id != this.quest.id).map(q => {
             return {name: q.locales.en, id: q.id}
           })
+        },
+        targets: function() {
+          return Object.values(this.$store.copy('items/data'))
         },
     },
     methods: {
@@ -515,6 +634,12 @@
       },
       targetLanguage(target) {
         return this.$store.copy(`items/data@${target}`)?.name || target
+      },
+      addObjective() {
+        this.$refs[`${this.quest.id}targetselect`].blur();
+        this.$nextTick(() => {
+          debugger
+        });
       }
     }
   }
