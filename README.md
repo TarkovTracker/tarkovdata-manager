@@ -1,3 +1,6 @@
+# DEPRECATED: This manager is no longer being worked on
+# instead, consider using and contributing to https://tarkov.dev/api/
+
 # tarkovdata-manager
 
 ## Project setup
